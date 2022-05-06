@@ -73,7 +73,14 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             var workItem = [];
 
             for (var key in taskTemplate.fields) {
-                if (IsPropertyValid(taskTemplate, key)) {
+
+                // check if the property is a add tags operation
+                if (key.indexOf('System.Tags') >= 0) {
+                    var fieldValue = taskTemplate.fields[key];
+                    workItem.push({ "op": "add", "path": "/fields/System.Tags", "value": fieldValue})
+                }
+
+                else if (IsPropertyValid(taskTemplate, key)) {
                     //if field value is empty copies value from parent
                     if (taskTemplate.fields[key] == '') {
                         if (currentWorkItem[key] != null) {
