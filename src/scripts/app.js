@@ -43,9 +43,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             if (taskTemplate.fields.hasOwnProperty(key) == false) {
                 return false;
             }
-            if (key.indexOf('System.Tags') >= 0) { //not supporting tags for now
-                return false;
-            }
+            // if (key.indexOf('System.Tags') >= 0) { //not supporting tags for now
+            //     return false;
+            // }
             if (taskTemplate.fields[key].toLowerCase() == '@me') { //current identity is handled later
                 return false;
             }
