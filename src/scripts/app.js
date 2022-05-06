@@ -76,8 +76,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
                 // check if the property is a add tags operation
                 if (key.indexOf('System.Tags') >= 0) {
-                    ShowDialog(" Logging: " + taskTemplate.fields + key);
-                    var fieldValue = taskTemplate.fields[key];
+                    var fieldValue = taskTemplate.fields['System.Tags-Add'];
                     workItem.push({ "op": "add", "path": "/fields/System.Tags", "value": fieldValue})
                 }
 
