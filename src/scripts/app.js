@@ -18,8 +18,6 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 requests.push(request);
             }, this);
 
-            console.log("Q: " + JSON.stringify(Q))
-
             return Q.all(requests)
                 .then(function (templateTypes) {
 
@@ -141,44 +139,22 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             }
 
 
-
-            // workItemTypes.forEach(function (workItemType) {
-
-            //     var request = witClient.getTemplates(ctx.project.id, ctx.team.id, workItemType);
-            //     requests.push(request);
-            // }, this);
-
-            // console.log("Q: " + JSON.stringify(Q))
-
-            // return Q.all(requests)
-            //     .then(function (templateTypes) {
-
-            //         var templates = [];
-            //         templateTypes.forEach(function (templateType) {
-            //             if (templateType.length > 0) {
-
-            //                 templateType.forEach(function (element) {
-            //                     templates.push(element)
-            //                 }, this);
-            //             }
-            //         }, this);
-            //         return templates;
-            //     });
-        // }
-
         function getChildrenTitlesForParent(service, witClient) {
             service.getWorkItemRelations().then(
                 function(relations) {
                     // console.log("Relations: " + relations)
 
-                    const promises = [];
+                    const promises = new Array();
 
                     for (const r of relations) {
                         // console.log("r: " + JSON.stringify(r) + Object.entries(r))
                         promises.push(getNameFromRelation(r, witClient))
                         }
                     
-                    return promises
+                    Promise.all(promises).then((results) => {
+                        console.log("ChildNamesList before returned: " + results)
+                        return results;
+                    })
                 }
             )
         }
@@ -295,24 +271,22 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                                 return;
                                             }
 
-                                            var childNamesListPromises = getChildrenTitlesForParent(service, witClient)
+                                            var childNamesList = getChildrenTitlesForParent(service, witClient)
 
-                                            console.log("ChildNamesListPromises before calling templates: " + childNamesListPromises)
+                                            console.log("ChildNamesList before calling templates: " + childNamesList) 
+
                                             
-                                            Promise.all(childNamesListPromises).then((results) => {
-                                                console.log("ChildNamesList when promises completed " + results)
-                                                // Get the names of the existing children
-                                                childNamesList.then( childNamesList => {
-                                                console.log("ChildNamesList before calling templates in then: " + childNamesList) 
+                                            // Get the names of the existing children
+                                            childNamesList.then( childNamesList => {
+                                            console.log("ChildNamesList before calling templates in then: " + childNamesList) 
 
-                                                // Create children alphabetically.
-                                                var templates = response.sort(SortTemplates);
-                                                var chain = Q.when();
-                                                templates.forEach(function (template) {
-                                                    chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings, childNamesList));
-                                                });
-                                                return chain;
-                                            })
+                                            // Create children alphabetically.
+                                            var templates = response.sort(SortTemplates);
+                                            var chain = Q.when();
+                                            templates.forEach(function (template) {
+                                                chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings, childNamesList));
+                                            });
+                                            return chain;
 
                                             })
                                         }
