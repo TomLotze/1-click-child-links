@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1.0,    
     "id": "vsts-work-item-one-click-child-links",    
-    "version": "1.0.0",
+    "version": "1.0.14",
     "name": "1-Click Child-Links",
     "description": "Add Child-Links from pre-defined templates with a single click.",
     "public": false,
@@ -42,7 +42,8 @@
     ],
     "scopes": [
         "vso.work",
-        "vso.work_write"
+        "vso.work_write",
+        "vso.work_full"
     ],
     "files": [
         {

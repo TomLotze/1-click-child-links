@@ -43,7 +43,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             if (taskTemplate.fields.hasOwnProperty(key) == false) {
                 return false;
             }
-            if (key.indexOf('System.Tags') >= 0) { //not supporting tags for now
+            if (key.indexOf('System.Tags') >= 0) { //tags are created in a different manner
                 return false;
             }
             if (taskTemplate.fields[key].toLowerCase() == '@me') { //current identity is handled later
@@ -117,25 +117,76 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '@me') {
                     workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": ctx.user.uniqueName })
                 }
-
-                // if (taskTemplate.fields['System.AssignedTo'].toLowerCase() == '') {
-                //     if (WIT['System.AssignedTo'] != null) {
-                //         workItem.push({ "op": "add", "path": "/fields/System.AssignedTo", "value": currentWorkItem['System.AssignedTo'] })
-                //     }
-                // }
             }
 
             return workItem;
         }
 
+
+        function getChildrenTitlesForParent(service, witClient) {
+            service.getWorkItemRelations().then(
+                function(relations) {
+                    console.log(relations)
+                    console.log(JSON.stringify(relations))
+
+                    var childNamesList = []
+
+                    for (r in relations) {
+                        if (r.rel == "System.LinkTypes.Hierarchy-Forward") {
+                            var childId = url.split("/").pop();
+
+                            witClient.getWorkItem(workItemId)
+                        .then(function (value) {
+                            var currentWorkItem = value.fields;
+
+                            currentWorkItem['System.Id'] = workItemId;
+                        }
+                    }
+
+                    return childNamesList
+                }
+            )
+        }
+
+        // Misschien moet deze een argument met existingTitles krijgen
         function createWorkItem(service, currentWorkItem, taskTemplate, teamSettings) {
 
             var witClient = _WorkItemRestClient.getClient();
 
             var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings);
 
+            if (childNamesList.includes(newWorkItem["System.Title"]) ){
+                console.log("The following title does already exist, child task is not created: " + newWorkItem["System.Title"])
+                return;
+            }
+
+            // Retrieve the relations of the parent item
+            service.getWorkItemRelations().then(
+                function(relations) {
+                    console.log(relations)
+                    console.log(JSON.stringify(relations))
+
+                    // // check if the related work is a child and if the title is the same
+                    // var alreadyExists = checkForDuplicates()
+
+                } 
+            )
+
+
+
+
+
+
             witClient.createWorkItem(newWorkItem, VSS.getWebContext().project.name, taskTemplate.workItemTypeName)
                 .then(function (response) {
+
+                    // print everything about the service and the response
+                    // ShowDialog(" service: " + Object.entries(service));
+                    // ShowDialog(" Getworkitemrelations: " + Object.entries(service.getWorkItemRelations()));
+                    // ShowDialog(" getWorkItemRelationTypes: " + Object.entries(service.getWorkItemRelationTypes()));
+                    // ShowDialog(" response: " + Object.entries(response) + "\n\nlinks: " + Object.entries(response['_links']) + "\n\nFields " + Object.entries(response['fields']) + "\n\nlinks[self] " + Object.entries(response['_links']['self']) + "\n\n Workitemupdates " + Object.entries(response['_links']['workItemUpdates']));
+
+
 
 
                     //Add relation
@@ -460,9 +511,9 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             var dialogOptions = {
                 title: "1-Click Child-Links",
-                width: 300,
-                height: 200,
-                resizable: false,
+                width: 600,
+                height: 400,
+                resizable: true,
             };
 
 
@@ -533,24 +584,6 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                 JSON.parse(str);
             } catch (e) {
                 return false;
-            }
-            return true;
-        }
-
-
-
-        function arraysEqual(a, b) {
-            if (a === b) return true;
-            if (a == null || b == null) return false;
-            if (a.length != b.length) return false;
-
-            // If you don't care about the order of the elements inside
-            // the array, you should sort both arrays here.
-            // Please note that calling sort on an array will modify that array.
-            // you might want to clone your array first.
-
-            for (var i = 0; i < a.length; ++i) {
-                if (a[i] !== b[i]) return false;
             }
             return true;
         }
