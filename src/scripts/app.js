@@ -122,101 +122,52 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return workItem;
         }
 
-        // function getNameFromRelation(r, witClient){
-        //     return new Promise((resolve) => {
-        //         if (r.rel == "System.LinkTypes.Hierarchy-Forward") {
-        //             var childId = Number(r.url.split("/").pop());
-        //             console.log("ChildID in getName: " + childId);
-
-        //             witClient.getWorkItem(childId).then(function (value) {
-        //                 // console.log("value in then: ", JSON.stringify(value))
-        //                 var childTitle = value.fields['System.Title'];
-        //                 console.log("Child Title: " + childTitle);
-        //                 debugger;
-        //                 resolve(childTitle);
-        //             })
-        //         }
-        //     });
-        // }
-
-
-    //     var requests = []
-    //     var witClient = _WorkItemRestClient.getClient();
-
-    //     workItemTypes.forEach(function (workItemType) {
-
-    //         var request = witClient.getTemplates(ctx.project.id, ctx.team.id, workItemType);
-    //         requests.push(request);
-    //     }, this);
-
-    //     return Q.all(requests)
-    //         .then(function (templateTypes) {
-
-    //             var templates = [];
-    //             templateTypes.forEach(function (templateType) {
-    //                 if (templateType.length > 0) {
-
-    //                     templateType.forEach(function (element) {
-    //                         templates.push(element)
-    //                     }, this);
-    //                 }
-    //             }, this);
-    //             return templates;
-    //         });
-    // }
 
         function getChildrenTitlesForParent(relations, witClient) {
         
-                console.log("Relations: " + relations);
-
                 var requests = new Array();
 
                 relations.forEach(function(r) {
                     if (r.rel == "System.LinkTypes.Hierarchy-Forward") {
+                        // Extract the child ID
                         var childId = Number(r.url.split("/").pop());
-                        console.log("ChildID in getName: " + childId);
-    
+                    
+                        // create a request to retrieve the child object to be able to extract the title
                         var request = witClient.getWorkItem(childId)
-                            
+                        
+                        // stack the requests
                         requests.push(request);
                     }
                 }, this)
                 
-
-                // for (const r of relations) {
-                //     // console.log("r: " + JSON.stringify(r) + Object.entries(r));
-                //     debugger;
-                //     promises.push(getNameFromRelation(r, witClient))
-                // }
-
-                debugger;
+                // if all requests are executed, return the list of child names
                 return Q.all(requests).then(function(childObjects) {
                     var childNames = [];
+
+                    // for each child object, extract the title
                     childObjects.forEach(function(child) {
                         var childTitle = child.fields['System.Title'];
-                        console.log("Child Title: " + childTitle);
                         childNames.push(childTitle)
                     }, this);
+
+                    // return a list of all child names
                     return childNames
                 })
-
-                // Promise.all(promises).then(function (childNamesList) {
-                //     debugger;
-                //     return childNamesList;
-                // });
             }
 
-        // Misschien moet deze een argument met existingTitles krijgen
+
         function createWorkItem(service, currentWorkItem, taskTemplate, teamSettings, childNamesList) {
 
             var witClient = _WorkItemRestClient.getClient();
 
             var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings);
 
-            console.log("ChildnamesList in createWorkItem is array: " + Array.isArray(childNamesList));
+            // find the title of the new work item
+            var newTitle = newWorkItem.filter(property => property.path == "/fields/System.Title")[0].value
 
-            if (childNamesList.includes(newWorkItem["System.Title"])){
-                console.log("The following title does already exist, child task is not created: " + newWorkItem["System.Title"]);
+            // if there alreay exists a child task with the same title, do not create this task
+            if (childNamesList.includes(newTitle)){
+                ShowDialog("Child task " + newTitle + " already exists, skipping...")
                 return;
             }
 
@@ -324,11 +275,15 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                                     console.log("ChildNamesList before calling templates in then: " + childNamesList);
 
                                                     // Create children alphabetically.
+                                                    // TODO: the order here should be according to predecessor/sucessor
                                                     var templates = response.sort(SortTemplates);
                                                     var chain = Q.when();
                                                     templates.forEach(function (template) {
                                                         chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings, childNamesList));
                                                 })
+
+                                                // give some feedback to the user
+                                                ShowDialog(templates.length + " child templates were created.")
                                                 return chain;
                                                 });
                                             })
@@ -552,8 +507,8 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             var dialogOptions = {
                 title: "1-Click Child-Links",
-                width: 600,
-                height: 400,
+                width: 450,
+                height: 300,
                 resizable: true,
             };
 
@@ -632,7 +587,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
         return {
 
             create: function (context) {
-                WriteLog('init v0.12.1');
+                WriteLog('init 1-Click-Links Extension');
 
                 ctx = VSS.getWebContext();
 
