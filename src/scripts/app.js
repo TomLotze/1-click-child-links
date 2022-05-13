@@ -122,42 +122,89 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
             return workItem;
         }
 
-        function getNameFromRelation(r, witClient){
-            return new Promise((resolve) => {
-                if (r.rel == "System.LinkTypes.Hierarchy-Forward") {
-                    var childId = Number(r.url.split("/").pop());
-                    console.log("ChildID in getName: " + childId)
+        // function getNameFromRelation(r, witClient){
+        //     return new Promise((resolve) => {
+        //         if (r.rel == "System.LinkTypes.Hierarchy-Forward") {
+        //             var childId = Number(r.url.split("/").pop());
+        //             console.log("ChildID in getName: " + childId);
 
-                    witClient.getWorkItem(childId).then(function (value) {
-                        // console.log("value in then: ", JSON.stringify(value))
-                        var childTitle = value.fields['System.Title'];
-                        console.log("Child Title: " + childTitle);
-                        resolve(childTitle);
-                    })
+        //             witClient.getWorkItem(childId).then(function (value) {
+        //                 // console.log("value in then: ", JSON.stringify(value))
+        //                 var childTitle = value.fields['System.Title'];
+        //                 console.log("Child Title: " + childTitle);
+        //                 debugger;
+        //                 resolve(childTitle);
+        //             })
+        //         }
+        //     });
+        // }
+
+
+    //     var requests = []
+    //     var witClient = _WorkItemRestClient.getClient();
+
+    //     workItemTypes.forEach(function (workItemType) {
+
+    //         var request = witClient.getTemplates(ctx.project.id, ctx.team.id, workItemType);
+    //         requests.push(request);
+    //     }, this);
+
+    //     return Q.all(requests)
+    //         .then(function (templateTypes) {
+
+    //             var templates = [];
+    //             templateTypes.forEach(function (templateType) {
+    //                 if (templateType.length > 0) {
+
+    //                     templateType.forEach(function (element) {
+    //                         templates.push(element)
+    //                     }, this);
+    //                 }
+    //             }, this);
+    //             return templates;
+    //         });
+    // }
+
+        function getChildrenTitlesForParent(relations, witClient) {
+        
+                console.log("Relations: " + relations);
+
+                var requests = new Array();
+
+                relations.forEach(function(r) {
+                    if (r.rel == "System.LinkTypes.Hierarchy-Forward") {
+                        var childId = Number(r.url.split("/").pop());
+                        console.log("ChildID in getName: " + childId);
+    
+                        var request = witClient.getWorkItem(childId)
+                            
+                        requests.push(request);
                     }
+                }, this)
+                
+
+                // for (const r of relations) {
+                //     // console.log("r: " + JSON.stringify(r) + Object.entries(r));
+                //     debugger;
+                //     promises.push(getNameFromRelation(r, witClient))
+                // }
+
+                debugger;
+                return Q.all(requests).then(function(childObjects) {
+                    var childNames = [];
+                    childObjects.forEach(function(child) {
+                        var childTitle = child.fields['System.Title'];
+                        console.log("Child Title: " + childTitle);
+                        childNames.push(childTitle)
+                    }, this);
+                    return childNames
                 })
+
+                // Promise.all(promises).then(function (childNamesList) {
+                //     debugger;
+                //     return childNamesList;
+                // });
             }
-
-
-        function getChildrenTitlesForParent(service, witClient) {
-            service.getWorkItemRelations().then(
-                function(relations) {
-                    // console.log("Relations: " + relations)
-
-                    const promises = new Array();
-
-                    for (const r of relations) {
-                        // console.log("r: " + JSON.stringify(r) + Object.entries(r))
-                        promises.push(getNameFromRelation(r, witClient))
-                        }
-                    
-                    Promise.all(promises).then((results) => {
-                        console.log("ChildNamesList before returned: " + results)
-                        return results;
-                    })
-                }
-            )
-        }
 
         // Misschien moet deze een argument met existingTitles krijgen
         function createWorkItem(service, currentWorkItem, taskTemplate, teamSettings, childNamesList) {
@@ -166,10 +213,10 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
 
             var newWorkItem = createWorkItemFromTemplate(currentWorkItem, taskTemplate, teamSettings);
 
-            console.log("ChildnamesList is array: " + Array.isArray(childNamesList))
+            console.log("ChildnamesList in createWorkItem is array: " + Array.isArray(childNamesList));
 
             if (childNamesList.includes(newWorkItem["System.Title"])){
-                console.log("The following title does already exist, child task is not created: " + newWorkItem["System.Title"])
+                console.log("The following title does already exist, child task is not created: " + newWorkItem["System.Title"]);
                 return;
             }
 
@@ -267,31 +314,25 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                     getTemplates(childTypes)
                                         .then(function (response) {
                                             if (response.length == 0) {
-                                                ShowDialog('No ' + childTypes + ' templates found. Please add ' + childTypes + ' templates for the project team.');
+                                                ShowDialog('No ' + childTypes + ' templates found. Please add ' + childTypes + ' templates for the project team.')
                                                 return;
                                             }
-
-                                            var childNamesList = getChildrenTitlesForParent(service, witClient)
-
-                                            console.log("ChildNamesList before calling templates: " + childNamesList) 
-
                                             
                                             // Get the names of the existing children
-                                            childNamesList.then( childNamesList => {
-                                            console.log("ChildNamesList before calling templates in then: " + childNamesList) 
+                                            service.getWorkItemRelations().then(function(relations) {
+                                                getChildrenTitlesForParent(relations, witClient).then( function(childNamesList) {
+                                                    console.log("ChildNamesList before calling templates in then: " + childNamesList);
 
-                                            // Create children alphabetically.
-                                            var templates = response.sort(SortTemplates);
-                                            var chain = Q.when();
-                                            templates.forEach(function (template) {
-                                                chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings, childNamesList));
-                                            });
-                                            return chain;
-
+                                                    // Create children alphabetically.
+                                                    var templates = response.sort(SortTemplates);
+                                                    var chain = Q.when();
+                                                    templates.forEach(function (template) {
+                                                        chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings, childNamesList));
+                                                })
+                                                return chain;
+                                                });
                                             })
-                                        }
-                            
-                                        );
+                                        });
                                 });
                         })
                 })
