@@ -282,8 +282,7 @@ define(["TFS/WorkItemTracking/Services", "TFS/WorkItemTracking/RestClient", "TFS
                                                         chain = chain.then(createChildFromTemplate(witClient, service, currentWorkItem, template, teamSettings, childNamesList));
                                                 })
 
-                                                // give some feedback to the user
-                                                ShowDialog(templates.length + " child templates were created.")
+
                                                 return chain;
                                                 });
                                             })
