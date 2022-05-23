@@ -8,11 +8,7 @@ The child work items created by this extension are based on the hierarchy of wor
 
 For example, if you're using a process inherited from the agile template with a custom requirement-level type called defect and 3 task templates defined, using 1-click on a user story or defect will generate three child tasks, one for each defined template.
 
-It's also possible to limit which parent work items apply to each template in one of two ways:
-
-Simplified: put the list of applicable parent work item types in the child template's description field, like this: `[Product Backlog Item,Defect]`
-
-Complex: put a minified (single line) JSON string into the child template's description field, like this:
+Put a minified (single line) JSON string into the child template's description field, like this:
 
 ``` json
 {
@@ -45,74 +41,11 @@ You should now have children associated with the open work item.
 
 ## Release notes ##
 
-* v0.11.3
-  * Fixed issue #62
-  * Fixed issue #49
-
-
-* v0.11.0
-  * Fixed issue #50
-  * Fixed issue #48
-  * Fixed issue #46
-  * Fixed issue #45
-  * Fixed issue #41
-  * Fixed issue #37
-  * Enhancement issue #49
-
-* v0.10.0
-  * Template applicability criteria can be defined using complex JSON objects in the template description.
-
-* v0.8.0
-  * Template sets can now be created on keywords in titles on top of Work Item Types
-  * Inherit values from parent work item fields (<a href="https://github.com/figueiredorui/1-click-child-links/wiki/Inherit-field-values-from-parent-work-item" target="_blank">wiki</a>)
-  * Copy field value from parent (<a href="https://github.com/figueiredorui/1-click-child-links/wiki/Copy-field-value-from-parent" target="_blank">wiki</a>)
-
-* v0.6.0
-  * 1-Click Child-Links option available when selecting multiple work items
-
-* v0.5.0
-  * 1-Click Child-Links option available on Card and Backlog context menu.
-
-* v0.4.0
-  * Identifier to distinguish templates sets to be added in a single click (<a href="https://github.com/figueiredorui/1-click-child-links/wiki/Group-templates-with-identifier" target="_blank">wiki</a>)
-
-* v0.3.0
-  * Enforce correct order when adding child links to work item
+* v1.0.0: Tags are being transferred to child tasks
+* v1.1.0: Duplicate tasks are not being created (based on title)
 
 ## Usage ##
+Create a new version by running:
+```npx tfx-cli extension create --output-path ..\dist```
 
-1. Clone the repository
-1. `npm install` to install required local dependencies
-2. `npm install -g grunt` to install a global copy of grunt (unless it's already installed)
-2. `grunt` to build and package the application
 
-### Grunt ###
-
-Basic `grunt` tasks are defined:
-
-* `package-dev` - Builds the development version of the vsix package
-* `package-release` - Builds the release version of the vsix package
-* `publish-dev` - Publishes the development version of the extension to the marketplace using `tfx-cli`
-* `publish-release` - Publishes the release version of the extension to the marketplace using `tfx-cli`
-
-Note: To avoid `tfx` prompting for your token when publishing, login in beforehand using `tfx login` and the service uri of ` https://marketplace.visualstudio.com`.
-
-### Debugging your extension ###
-In order to debug the extension using Visual Studio or Browser Developer Tools and speed up the development without redeploying extension each time you change source code, you need change manifest adding baseUri property:
-
-``` json
-{
- 
-    "baseUri": "https://localhost:5501",
- 
-}
-```
-
-## Contributors ##
-
-<a href="https://github.com/jdshkolnik"><img src="https://avatars.githubusercontent.com/u/2047520?v=3" title="jdshkolnik" width="80" height="80"></a>
-<a href="https://github.com/thesobercoder"><img src="https://avatars.githubusercontent.com/u/1915249?v=3" title="thesobercoder" width="80" height="80"></a>
-
-## Credits ##
-
-Clone from https://github.com/cschleiden/vsts-extension-ts-seed-simple
